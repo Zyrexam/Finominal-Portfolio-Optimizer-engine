@@ -24,9 +24,12 @@ def portfolio_volatility(w, cov):
     return float(np.sqrt(w.T @ cov @ w))
 
 
+RISK_FREE_ANNUAL = 0.02  # standard value; matches reference tool (rf=0 zeroes AGG excess wrongly)
+
+
 def sharpe_ratio(w, mean, cov):
     vol = portfolio_volatility(w, cov)
-    return float(w @ mean) / vol if vol else 0.0
+    return float(w @ (mean - RISK_FREE_ANNUAL / 252)) / vol if vol else 0.0
 
 
 def max_drawdown(pr):

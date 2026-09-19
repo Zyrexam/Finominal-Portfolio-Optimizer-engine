@@ -1,3 +1,16 @@
+SCENARIO 1 — Equal Weights | IEFA 25, SPY 75 | none
+{
+  "securities": [
+    {"ticker": "IEFA", "current_weight": 25},
+    {"ticker": "SPY", "current_weight": 75}
+  ],
+  "strategy": "equal_weights"
+}
+
+
+
+
+SCENARIO 2 — Risk Parity | VEA 25, AGG 75 | none
 {
   "securities": [
     {"ticker": "VEA", "current_weight": 25},
@@ -6,7 +19,29 @@
   "strategy": "risk_parity"
 }
 
+SCENARIO 3 — Minimize Volatility | SPY 60, AGG 30, GLD 10 | none
+{
+  "securities": [
+    {"ticker": "SPY", "current_weight": 60},
+    {"ticker": "AGG", "current_weight": 30},
+    {"ticker": "GLD", "current_weight": 10}
+  ],
+  "strategy": "minimize_volatility"
+}
 
+SCENARIO 4 — Maximize Sharpe Ratio | all-5 x20 | none
+{
+  "securities": [
+    {"ticker": "IEFA", "current_weight": 20},
+    {"ticker": "GLD", "current_weight": 20},
+    {"ticker": "AGG", "current_weight": 20},
+    {"ticker": "VEA", "current_weight": 20},
+    {"ticker": "SPY", "current_weight": 20}
+  ],
+  "strategy": "maximize_sharpe_ratio"
+}
+
+SCENARIO 5 — Maximize Sharpe Ratio | all-5 x20 | yield>=2.5%, each 5-40%
 {
   "securities": [
     {"ticker": "IEFA", "current_weight": 20},
@@ -21,7 +56,7 @@
   "min_dividend": 0.025
 }
 
-
+SCENARIO 6 — BONUS
 {
   "securities": [
     {"ticker": "IEFA", "current_weight": 20},
@@ -30,36 +65,5 @@
     {"ticker": "VEA", "current_weight": 20},
     {"ticker": "SPY", "current_weight": 20}
   ],
-  "strategy": "min_vol"
-}
-
-{
-  "securities": [
-    {"ticker": "IEFA", "current_weight": 25},
-    {"ticker": "GLD", "current_weight": 25},
-    {"ticker": "AGG", "current_weight": 25},
-    {"ticker": "VEA", "current_weight": 25}
-  ],
-  "strategy": "equal_weights"
-}
-
-{
-  "securities": [
-    {"ticker": "IEFA", "current_weight": 20},
-    {"ticker": "GLD", "current_weight": 20},
-    {"ticker": "AGG", "current_weight": 20},
-    {"ticker": "VEA", "current_weight": 20},
-    {"ticker": "SPY", "current_weight": 20}
-  ],
-  "strategy": "risk_parity"
-}
-
-
-{
-  "securities": [
-    {"ticker": "SPY", "current_weight": 60},
-    {"ticker": "AGG", "current_weight": 30},
-    {"ticker": "GLD", "current_weight": 10}
-  ],
-  "strategy": "minimize_drawdown"
+  "strategy": "optimize_factor_exposure"
 }
