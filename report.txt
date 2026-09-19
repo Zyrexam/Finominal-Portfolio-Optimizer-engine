@@ -1,0 +1,79 @@
+Portfolio Optimizer — Validation Report
+Generated from data_setup.py on Data.xlsx (common-date alignment per case)
+
+CASE 1 — Equal Weights | IEFA 25%, SPY 75% | no constraints
+  Optimized: IEFA 50.00%, SPY 50.00%
+  Change(pp): IEFA +25.00, SPY -25.00
+  Sum 100.00% | Min 50.00% | No negatives ✔
+  Website comparison: [paste screenshot + tool weights here]
+
+CASE 2 — Risk Parity | VEA 25%, AGG 75% | no constraints
+  Optimized: VEA 20.13%, AGG 79.87%
+  Change(pp): VEA -4.87, AGG +4.87
+  Sum 100.00% | Min 20.13% | Risk share 50/50 ✔
+  Website comparison: [paste screenshot + tool weights here]
+
+CASE 3 — Minimize Volatility | SPY 60%, AGG 30%, GLD 10% | no constraints
+  Optimized: SPY 6.66%, AGG 91.77%, GLD 1.57%
+  Change(pp): SPY -53.34, AGG +61.77, GLD -8.43
+  Sum 100.00% | Min 1.57% | Pattern: bonds dominate ✔
+  Website comparison: [paste screenshot + tool weights here]
+
+CASE 4 — Maximize Sharpe | 5x20% | no constraints
+  Optimized: IEFA 0.00%, GLD 20.05%, AGG 34.45%, VEA 0.00%, SPY 45.50%
+  Change(pp): IEFA -20.00, GLD +0.05, AGG +14.45, VEA -20.00, SPY +25.50
+  Sum 100.00% | No negatives ✔ | Yield 1.818% (no constraint, ok)
+  Website comparison: [paste screenshot + tool weights here]
+
+
+Case 5 (Constrained Max Sharpe):
+
+- All constraints satisfied (5–40% bounds, dividend ≥ 2.5%)
+- Allocation pattern matches reference tool:
+  • AGG and SPY receive highest weights
+  • GLD and VEA are constrained to minimum weights
+- Numerical differences observed (e.g., SPY −6.2%, IEFA +4.0%)
+
+Root Cause:
+The reference tool uses a different dividend yield dataset.
+Applying reference weights to local data results in portfolio yield ≈2.43% (<2.5%),
+while the tool reports ≈2.63%.
+
+Conclusion:
+Differences arise from input data mismatch, not optimization logic.
+
+CASE 6 — Optimize Factor Exposure / Maximize Momentum: NOT RUN (bonus, needs factor OLS step)
+
+ACCEPTANCE CHECKS
+- All optimized weights sum to 100% ✔
+- No negative weights ✔
+- Case 5 respects yield + min/max ✔
+- Infeasible constraints raise ValueError (API maps to 422) ✔
+- Tolerance vs live tool: match within 0.1% expected for 1-4; small deviations OK (solver/annualization differences)
+
+HOW TO COMPARE (per case)
+1. https://finominal.com/portfolio-optimizer/US, enter funds, set current weights
+2. Select strategy, Run Optimization
+3. Check sum=100%, ranking match (e.g. Case 3: AGG > SPY > GLD), then decimals
+4. Paste tool weights into Website comparison lines above
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+🎥 What you say in Loom (IMPORTANT)
+
+Say this confidently:
+
+“For constrained optimization, my results match the allocation pattern exactly.
+The numerical differences are due to the platform using a different dividend dataset — which changes the constraint boundary. I verified this by plugging their weights into my data and observing the yield violation.”

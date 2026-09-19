@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from scipy.optimize import minimize
 
 
 def load_data():
@@ -20,7 +21,6 @@ def load_data():
 
 
 def portfolio_volatility(w, cov):
-    # ponytail: daily vol, no annualization; rankings identical, annualize only for display.
     return float(np.sqrt(w.T @ cov @ w))
 
 
@@ -35,12 +35,95 @@ def max_drawdown(pr):
     return float(np.min((cum - peak) / peak))
 
 
+
+
+def _build_constraints(n, dividends, min_w=0.0, max_w=1.0, min_dividend=None):
+    bounds = [(min_w, max_w)] * n
+    constraints = [{"type": "eq", "fun": lambda w: np.sum(w) - 1}]
+    if min_dividend is not None:
+        constraints.append({"type": "ineq", "fun": lambda w: float(w @ dividends) - min_dividend})
+    return bounds, constraints
+
+
+def _check_weights(w):
+    if abs(float(np.sum(w)) - 1) > 1e-6 or bool((w < -1e-9).any()):
+        raise ValueError("Invalid weights: must sum to 1 and never be negative")
+
+
+def optimize_weights(cols, ret_wide, objective, min_w=0.0, max_w=1.0,
+                     min_dividend=None, dividends=None, maxiter=100):
+    n = len(cols)
+    if n == 1:
+        return np.array([1.0]), None, None, True
+    m = ret_wide[cols].dropna().values
+    mean = np.mean(m, axis=0)
+    cov = np.cov(m, rowvar=False)
+    divs = np.array([dividends[t] for t in cols]) if min_dividend is not None else None # type: ignore
+    bounds, constraints = _build_constraints(n, divs, min_w, max_w, min_dividend)
+    res = minimize(
+        objective,
+        np.array([1 / n] * n),
+        args=(mean, cov),
+        method="SLSQP",
+        bounds=bounds,
+        constraints=constraints,
+        options={"maxiter": maxiter},
+    )
+    if not res.success:
+        raise ValueError(f"Optimization failed: {res.message}")
+    _check_weights(res.x)
+    return res.x, mean, cov, res.success
+
+
+def min_vol_weights(cols, ret_wide, **kwargs):
+    return optimize_weights(cols, ret_wide, lambda w, mean, cov: portfolio_volatility(w, cov), **kwargs)
+
+
+def max_sharpe_weights(cols, ret_wide, **kwargs):
+    return optimize_weights(cols, ret_wide, lambda w, mean, cov: -sharpe_ratio(w, mean, cov), **kwargs)
+
+
+def equal_weights(n):
+    return np.array([1 / n] * n)
+
+
+def risk_parity_weights(cols, ret_wide, **kwargs):
+    # Normalized: raw sum((rc - var/N)^2) is ~1e-10 scale, SLSQP stalls at init.
+    def objective(w, mean, cov):
+        var = max(float(w.T @ cov @ w), 1e-12)
+        rc = w * (cov @ w)
+        return float(np.sum((rc / var - 1 / len(w)) ** 2))
+
+    return optimize_weights(cols, ret_wide, objective, **kwargs)
+
+
+def min_drawdown_weights(cols, ret_wide, maxiter=300, min_w=0.0, max_w=1.0,
+                         min_dividend=None, dividends=None):
+    n = len(cols)
+    if n == 1:
+        return np.array([1.0]), True
+    m = ret_wide[cols].dropna().values
+    divs = np.array([dividends[t] for t in cols]) if min_dividend is not None else None # type: ignore
+    bounds, constraints = _build_constraints(n, divs, min_w, max_w, min_dividend)
+    res = minimize(
+        lambda w: abs(max_drawdown(m @ w)),
+        np.array([1 / n] * n),
+        method="SLSQP",
+        bounds=bounds,
+        constraints=constraints,
+        options={"maxiter": maxiter},
+    )
+    if not res.success:
+        raise ValueError(f"Optimization failed: {res.message}")
+    _check_weights(res.x)
+    return res.x, res.success
+
+
 if __name__ == "__main__":
     info, ret_wide, fac_wide = load_data()
 
     print(info[["ticker", "dividend_yield"]].to_string(index=False))
     print("ret_wide:", ret_wide.shape, "| fac_wide:", fac_wide.shape)
-    # ponytail: inner-join dates; fewer tickers = longer history, so align per case.
     print("ALL-5 common rows:", len(ret_wide.dropna()))
 
     cols = ["IEFA", "GLD", "AGG", "VEA", "SPY"]
